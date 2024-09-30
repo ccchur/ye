@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>图片编辑工具</title>
+
+	<!-- 引入 Tailwind CSS -->
+	<script src="https://cdn.tailwindcss.com"></script>
+
+	<style>
+		@font-face {
+	font-family: 'timtastic!';
+		src: url('./timtastic!.ttf');
+    }
+	#canvas-container {
+		border: 2px dashed #ccc;
+		margin-bottom: 10px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		background-color: #f9f9f9;
+	}
+
+    .ye-font{
+        font-family: 'timtastic!';
+        color: #29F74E;;
+    }
+
+	</style>
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+	<div class="container mx-auto p-6">
+		<h1 class="text-3xl font-bold mb-4 text-center ye-font">For ye fans</h1>
+
+		<!-- 画布容器 -->
+		<div id="canvas-container" class="w-full max-w-4xl mx-auto ye-font">
+			<canvas id="canvas" width="600" height="600" class="p-6"></canvas>
+		</div>
+
+		<!-- 控制面板 -->
+		<div id="controls" class="flex flex-wrap justify-center gap-4 mt-6">
+			<!-- 上传图片 -->
+			<div>
+				<label for="upload" class="block text-sm font-medium text-gray-700">选择图片</label>
+				<input type="file" id="upload" accept="image/*" 
+					class="mt-1 block w-56 p-2 border-gray-300 rounded-md cursor-pointer bg-white">
+			</div>
+
+			<!-- 输入文本 -->
+			<div>
+				<label for="text" class="block text-sm font-medium text-gray-700">输入文本</label>
+				<input type="text" id="text" placeholder="在这里输入文本"
+					class="mt-1 block w-56 p-2 border-gray-300 rounded-md">
+			</div>
+
+			<!-- 字体大小 -->
+			<div>
+				<label for="font-size" class="block text-sm font-medium text-gray-700">字体大小</label>
+				<input type="number" id="font-size" value="30" min="10" max="100"
+					class="mt-1 block w-20 p-2 border-gray-300 rounded-md">
+			</div>
+
+			<!-- 颜色选择 -->
+			<div>
+				<label for="color" class="block text-sm font-medium text-gray-700">颜色</label>
+				<input type="color" id="color" value="#29F74E" class="mt-1 block w-16 h-10">
+			</div>
+
+			<!-- 操作按钮 -->
+			<div class="flex items-end gap-4">
+				<button id="addText" class="px-4 py-2 bg-blue-600 text-white rounded-md">添加文本</button>
+				<button id="deleteText" class="px-4 py-2 bg-red-600 text-white rounded-md">删除选中文本</button>
+				<button id="download" class="px-4 py-2 bg-green-600 text-white rounded-md">下载图片</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- 引入 Fabric.js 库 -->
+	<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.6.0/fabric.min.js"></script> -->
+<script src="http://cdnjs.cloudflare.com/ajax/libs/fabric.js/2.4.6/fabric.min.js"></script>
+	<script>
+		// 初始化 Fabric.js 画布
+		const canvas = new fabric.Canvas('canvas', {
+			preserveObjectStacking: true
+		});
+
+		// 处理图片上传
+		document.getElementById('upload').addEventListener('change', function (e) {
+			const reader = new FileReader();
+			reader.onload = function (event) {
+				fabric.Image.fromURL(event.target.result, function (img) {
+					canvas.clear();
+					canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+						scaleX: canvas.width / img.width,
+						scaleY: canvas.height / img.height
+					});
+				});
+			};
+			// reader.readAsDataURL(e.target.files[0]);
+			reader.readAsDataURL(e.target.files[0]);
+		});
+
+		// 添加文本
+		document.getElementById('addText').addEventListener('click', function () {
+			const text = document.getElementById('text').value.trim();
+			if (text === '') {
+				alert('请输入文本内容');
+				return;
+			}
+
+			const fontSize = parseInt(document.getElementById('font-size').value, 10) || 30;
+			const color = document.getElementById('color').value;
+
+			const newText = new fabric.Textbox(text, {
+				left: 50,
+				top: 50,
+				fontSize: fontSize,
+				fill: color,
+				editable: true,
+				lockRotation: true,
+				hasRotatingPoint: false,
+				lockScalingFlip: true,
+				width: 200,
+                fontFamily: 'timtastic!',
+			});
+
+			canvas.add(newText);
+			canvas.setActiveObject(newText);
+			document.getElementById('text').value="";
+			canvas.renderAll();
+		});
+
+		// 删除选中的文本
+		document.getElementById('deleteText').addEventListener('click', function () {
+			const activeObject = canvas.getActiveObject();
+			if (activeObject && activeObject.type === 'textbox') {
+				canvas.remove(activeObject);
+			} else {
+				alert('请选择一个文本框进行删除');
+			}
+		});
+
+		// 下载图片
+		document.getElementById('download').addEventListener('click', function () {
+			canvas.discardActiveObject();
+			canvas.renderAll();
+
+			const dataURL = canvas.toDataURL({
+				format: 'png',
+				quality: 1.0
+			});
+
+			const link = document.createElement('a');
+			link.href = dataURL;
+			link.download = 'edited-image.png';
+			link.click();
+		});
+	</script>
+
+</body>
+
+</html>
